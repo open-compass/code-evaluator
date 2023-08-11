@@ -40,3 +40,5 @@ RUN update-alternatives --install /usr/bin/java java $JAVA_HOME/bin/java 20000 \
     && update-alternatives --install /usr/bin/javac javac $JAVA_HOME/bin/javac 20000 \
     && rm -r /workspace/download \
     && env
+
+WORKDIR /workspace/code-evaluator/
