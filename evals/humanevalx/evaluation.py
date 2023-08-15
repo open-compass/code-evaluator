@@ -183,7 +183,7 @@ def evaluate_functional_correctness(
     correct = np.array(correct)
     if evaluate_pass_at_k:
         ks = k
-        pass_at_k = {f"pass@{k}": estimate_pass_at_k(total, correct, k).mean()
+        pass_at_k = {f"pass@{k}": estimate_pass_at_k(total, correct, k).mean() * 100
                      for k in ks if (total >= k).all()}
         logger.info(pass_at_k)
     else:
