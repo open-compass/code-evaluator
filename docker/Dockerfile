@@ -5,7 +5,7 @@ RUN cp /etc/apt/sources.list /etc/apt/sources.list.bak \
     && sed -i "s@http://.*security.ubuntu.com@https://mirrors.tuna.tsinghua.edu.cn@g" /etc/apt/sources.list \
     && pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple \
     && apt-get update && apt-get install -y curl npm git nano \
-    && pip install fire zmq transformers tokenizers \
+    && pip install fire \
     && mkdir /workspace/download
 
 RUN curl -o /workspace/download/go.tar.gz -SL https://go.dev/dl/go1.18.4.linux-amd64.tar.gz \

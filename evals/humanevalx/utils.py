@@ -416,17 +416,33 @@ def cleanup_code(
             if '}' in code:
                 code = code[:code.rfind('}')] + '}'
         elif language_type.lower() == "cpp":
+            code = extract_block(code)
             if "\nint main()" in code:
                 code = code[:code.rfind("int main()")]
             if '}' in code:
                 code = code[:code.rfind('}')] + '}'
         elif language_type.lower() == "js":
+            code = extract_block(code)
             if '}' in code:
                 code = code[:code.rfind('}')] + '}'
         elif language_type.lower() == "rust":
             if '}' in code:
                 code = code[:code.rfind('}')] + '}'
 
+    return code
+
+def extract_block(code):
+    l_count, r_count = 0, 0
+    for i, c in enumerate(code):
+        if c == "{":
+            l_count += 1
+        elif c == "}":
+            r_count += 1
+            if (l_count) + 1 == r_count:
+                return code[:i+1]
+        else:
+            pass
+    
     return code
 
 

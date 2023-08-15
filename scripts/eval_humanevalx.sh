@@ -1,6 +1,6 @@
 #!/bin/bash
 
-support_languages=("python" "js" "go" "cpp" "java")
+support_languages=("python" "js" "go" "cpp" "java", "rust")
 
 EVAL_INPUT_PATH=$1        # evaluation file, 
 LANGUAGE=$2               # langugae

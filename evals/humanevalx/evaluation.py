@@ -11,6 +11,7 @@ from typing import *
 from tqdm.auto import tqdm
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from utils import cleanup_code
 
 from execution import check_correctness
 from utils import Logger, IMPORT_HELPER, read_dataset, stream_jsonl_all, estimate_pass_at_k
@@ -41,6 +42,7 @@ def postprocess_generation(sample, generation_mode="completion"):
 
 
 def process_test(sample, problems, dataset_type, language_type, generation_mode):
+    sample["generation"] = cleanup_code(sample["generation"], dataset_type, language_type)
     if dataset_type == "humanevalx":
         task_id = sample["task_id"]
         prompt = problems[task_id]["prompt"]
@@ -148,6 +150,7 @@ def evaluate_functional_correctness(
                 if dataset_type == "mbpp":
                     sample["generation"] = sample["code"]
                     sample["prompt"] = problems[task_id]["prompt"]
+            # assert 1 == 2, f"{list(problems.keys())}"
             sample["prompt"] = problems[task_id]["prompt"]
             sample = postprocess_generation(sample, generation_mode)
             sample["test_code"] = process_test(sample, problems, dataset_type, language_type, generation_mode)
