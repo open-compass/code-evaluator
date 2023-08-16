@@ -43,7 +43,9 @@ HumanEval-X 是用于评估代码生成模型的多语言能力的基准测试�
 构建 Docker 镜像：
 
 ```shell
-cd docker & sudo docker build -t code-eval:latest . 
+git clone https://github.com/Ezra-Yu/code-evaluator.git
+cd code-evaluator/docker 
+sudo docker build -t code-eval:latest . 
 ```
 
 获取镜像后，使用以下命令创建容器：

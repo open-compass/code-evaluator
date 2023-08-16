@@ -50,7 +50,9 @@ Make sure you have install docker, and then build a image and run a service of c
 build Docker Image:
 
 ```shell
-cd docker & sudo docker build -t code-eval:latest . 
+git clone https://github.com/Ezra-Yu/code-evaluator.git
+cd code-evaluator/docker 
+sudo docker build -t code-eval:latest . 
 ```
 
 After getting the image, use the following command to create the container:
