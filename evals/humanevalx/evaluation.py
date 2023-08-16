@@ -150,7 +150,6 @@ def evaluate_functional_correctness(
                 if dataset_type == "mbpp":
                     sample["generation"] = sample["code"]
                     sample["prompt"] = problems[task_id]["prompt"]
-            # assert 1 == 2, f"{list(problems.keys())}"
             sample["prompt"] = problems[task_id]["prompt"]
             sample = postprocess_generation(sample, generation_mode)
             sample["test_code"] = process_test(sample, problems, dataset_type, language_type, generation_mode)

@@ -5,8 +5,11 @@ import shutil
 import re
 import json
 import argparse
+from werkzeug.utils import secure_filename
+from collections import deque
 
 app = Flask(__name__)
+request_dq = deque()
 
 def upload_file(request):
     if 'file' not in request.files:
@@ -20,7 +23,7 @@ def upload_file(request):
     
     # 保存文件到本地
     ip_address = request.remote_addr
-    filepath = os.path.join('uploads', ip_address, file.filename)
+    filepath = os.path.join('uploads', ip_address, secure_filename(file.filename))
     if not os.path.exists(os.path.join('uploads', ip_address)):
         os.makedirs(os.path.join('uploads', ip_address))
     file.save(filepath)
@@ -40,16 +43,14 @@ def make_cmd(eval_filepath, dataset, ip_address):
         result_dir = f"outputs/{ip_address}-{dataset}-{language}"
         return ['scripts/eval_humanevalx.sh', eval_filepath, language, "-n", '8', "-o", result_dir], result_dir
 
-
-@app.route('/evaluate', methods=['POST'])
-def evaluate():
+def _eval(single_request):
     try:
-        eval_filepath = upload_file(request)
+        eval_filepath = upload_file(single_request)
     except Exception as e:
         return {'message': 'Error in upload_file', 'exception': e}, 400
     
-    dataset = request.form.get('dataset')
-    ip_address = request.remote_addr
+    dataset = single_request.form.get('dataset')
+    ip_address = single_request.remote_addr
 
     try:
         check_datasets(dataset) 
@@ -80,6 +81,17 @@ def evaluate():
         if os.path.exists(os.path.dirname(resilt_file)):
             shutil.rmtree(os.path.dirname(resilt_file))
         return {'message': "Eval Error with your result file.", 'stderr': result.stderr}, 400
+
+
+@app.route('/evaluate', methods=['POST'])
+def evaluate():
+    request_dq.append(request)
+
+    while len(request_dq) >= 0:
+        r = request_dq.pop()
+        result = _eval(r)
+        if r is request:
+            return result
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="This is a simple argument parser")
