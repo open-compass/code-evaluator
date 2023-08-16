@@ -4,14 +4,15 @@ support_languages=("python" "js" "go" "cpp" "java" "rust")
 
 EVAL_INPUT_PATH=$1        # evaluation file, 
 LANGUAGE=$2               # langugae
-TIMEOUT=5
+TIMEOUT=15
 DATA_PATH="./datasets/humanevalx/humanevalx_$LANGUAGE.jsonl.gz"
 
 NUM_WORKERS=8
 OUTPUT_DIR=outputs/humanevalx-${LANGUAGE} 
+TMP_DIR=tmp
 
 OPTIND=3
-while getopts "n:o:" OPT; 
+while getopts "n:o:t:l:" OPT; 
 do
   case $OPT in
     n) 
@@ -20,7 +21,10 @@ do
     o) 
       OUTPUT_DIR="$OPTARG"
       ;;
-      \?) 
+    t) 
+      TMP_DIR="$OPTARG"
+      ;;
+    \?) 
       echo "Invalid option -$OPTARG" >&2
       exit 1
     ;;
@@ -71,7 +75,7 @@ CMD="python ./evals/humanevalx/evaluation.py \
     --dataset_type humanevalx \
     --generation_mode completion \
     --n_workers $NUM_WORKERS \
-    --tmp_dir tmp  \
+    --tmp_dir $TMP_DIR  \
     --problem_file $DATA_PATH \
     --timeout $TIMEOUT"
 
@@ -81,8 +85,8 @@ eval $CMD
 
 echo "Evaluating $LANGUAGE End ......"
 
-if [ -f "tmp" ]; then
-    rm -R tmp
+if [ -f $TMP_DIR ]; then
+    rm -R $TMP_DIR
 fi
 
 echo "Evaluation finished."

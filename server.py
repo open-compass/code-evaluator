@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, g
 import os
 import subprocess
 import shutil
@@ -6,10 +6,8 @@ import re
 import json
 import argparse
 from werkzeug.utils import secure_filename
-from collections import deque
 
 app = Flask(__name__)
-request_dq = deque()
 
 def upload_file(request):
     if 'file' not in request.files:
@@ -41,7 +39,14 @@ def make_cmd(eval_filepath, dataset, ip_address):
     if 'humanevalx' in dataset:
         dataset, language = dataset.split("/")
         result_dir = f"outputs/{ip_address}-{dataset}-{language}"
-        return ['scripts/eval_humanevalx.sh', eval_filepath, language, "-n", '8', "-o", result_dir], result_dir
+        tmp_dir = f"outputs/{ip_address}-{dataset}-{language}-tmp"
+        return [
+            'scripts/eval_humanevalx.sh', 
+            eval_filepath, 
+            language, 
+            "-n", '8', 
+            "-o", result_dir,
+            "-t", tmp_dir], result_dir
 
 def _eval(single_request):
     try:
@@ -85,13 +90,8 @@ def _eval(single_request):
 
 @app.route('/evaluate', methods=['POST'])
 def evaluate():
-    request_dq.append(request)
-
-    while len(request_dq) >= 0:
-        r = request_dq.pop()
-        result = _eval(r)
-        if r is request:
-            return result
+    result = _eval(request)
+    return result
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="This is a simple argument parser")
