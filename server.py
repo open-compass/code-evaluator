@@ -103,9 +103,9 @@ if __name__ == '__main__':
     if not os.path.exists("outputs"):
         os.mkdir("outputs")
 
-    # In this context, we have deactivated multi-threading and multi-processing primarily
+    # In this context, we have deactivated multi-threading and use multi-processing  of 2
     # to prevent excessive CPU load. Overloading the CPU can lead to situations where the
     # run-wait time of certain examples, such as 'go', is deemed unacceptable. This could
     #  ultimately result in lower-than-expected evaluation outcomes.
-    # CPU负载过高导致部分样例的运行时长超过限制，最后判定为不通过 
-    app.run(debug=True, host="0.0.0.0", port=args.port, threaded=False)
+    # CPU负载过高导致部分样例的运行时长超过限制，最后判定为不通过,
+    app.run(debug=True, host="0.0.0.0", port=args.port, threaded=False, processes=2)
