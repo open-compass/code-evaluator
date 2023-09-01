@@ -387,21 +387,8 @@ def cleanup_code(
         code = first_block(code, stop_words)
     elif dataset_type == "humanevalx":
         if language_type.lower() == "python":
-            code_splits = code.split("\n")
-            is_empty_line = False
-            ind_empty_line = None
-            for i, line in enumerate(code_splits):
-                if len(line.strip()) > 0 and line[0] != ' ' and line[0] != '\t':
-                    is_empty_line = True
-                    ind_empty_line = i
-                    break
-            if is_empty_line:
-                code = "\n".join(code_splits[:ind_empty_line])
-            else:
-                end_words = ["\ndef", "\nclass", "\n#", "\nassert", '\n"""', "\nprint", "\nif", "\n\n\n"]
-                for w in end_words:
-                    if w in code:
-                        code = code[:code.rfind(w)]
+            # already processed in Opencompass
+            pass
         elif language_type.lower() == "java":
             main_pos = code.find("public static void main")
             if main_pos != -1:
@@ -410,12 +397,18 @@ def cleanup_code(
                 code = code[:code.rfind('}')] + '}'
             if code.count('{') + 1 == code.count('}'):
                 code += "\n}"
+            if "public class" in code:
+                code = code[:code.find("public class")]
         elif language_type.lower() == "go":
-            if "\nfunc main(" in code:
-                code = code[:code.rfind("func main(")]
+            pattern = re.compile("func main\((.*?)\n}", re.DOTALL)
+            code = pattern.sub('', code)
+            if "package main" in code:
+                code = code[code.find("package main"):]
             if '}' in code:
                 code = code[:code.rfind('}')] + '}'
         elif language_type.lower() == "cpp":
+            if "using namespace std;" not in code:
+                code = "using namespace std;\n"+code
             code = extract_block(code)
             if "\nint main()" in code:
                 code = code[:code.rfind("int main()")]

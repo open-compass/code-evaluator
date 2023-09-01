@@ -12,7 +12,7 @@ OUTPUT_DIR=outputs/humanevalx-${LANGUAGE}
 TMP_DIR=tmp
 
 OPTIND=3
-while getopts "n:o:t:l:" OPT; 
+while getopts "n:o:t:p:l:" OPT; 
 do
   case $OPT in
     n) 
@@ -23,6 +23,9 @@ do
       ;;
     t) 
       TMP_DIR="$OPTARG"
+      ;;
+    p) 
+      WITH_PROMPT=$OPTARG
       ;;
     \?) 
       echo "Invalid option -$OPTARG" >&2
@@ -77,6 +80,7 @@ CMD="python ./evals/humanevalx/evaluation.py \
     --n_workers $NUM_WORKERS \
     --tmp_dir $TMP_DIR  \
     --problem_file $DATA_PATH \
+    --with_prompt $WITH_PROMPT \
     --timeout $TIMEOUT"
 
 echo "Running CMD: " $CMD
