@@ -41,7 +41,7 @@ def postprocess_generation(sample, generation_mode="completion"):
     return sample
 
 
-def process_test(sample, problems, dataset_type, language_type, generation_mode):
+def process_test(sample, problems, dataset_type, language_type, generation_mode, with_prompt):
     sample["generation"] = cleanup_code(sample["generation"], dataset_type, language_type)
     if dataset_type == "humanevalx":
         task_id = sample["task_id"]
@@ -49,12 +49,19 @@ def process_test(sample, problems, dataset_type, language_type, generation_mode)
         test = problems[task_id]["test"]
         code = sample["generation"]
         
+        if not with_prompt:
+            prompt = ''
         # Pre-process for different languages
         if language_type == "python":
             test_setup = "\n".join(IMPORT_HELPER["python"]) + "\n"
             test_string = test_setup + prompt + code + "\n" + test + "\n"
         elif language_type == "cpp":
             test_set_up = ""
+            funcname = re.search('using namespace std;\n(.*?){\s', prompt)
+            if funcname:
+                funcname = funcname.group()[21:].strip()
+                if funcname in code:
+                    code = code[code.find('{')+1:]
             for s in IMPORT_HELPER["cpp"]:
                 if s not in prompt:
                     test_set_up += s + "\n"
@@ -66,6 +73,9 @@ def process_test(sample, problems, dataset_type, language_type, generation_mode)
         elif language_type == "go":
             import_string = problems[task_id]["import"]
             prompt = prompt.replace(import_string, "")
+            # remove unnecessary title if not use prompt
+            if "func " in code and not with_prompt:
+                code = code[code.find("func "):]
             test = problems[task_id]["test"]
             test_setup = problems[task_id]["test_setup"]
             other_pkgs = []
@@ -106,6 +116,7 @@ def evaluate_functional_correctness(
     dataset_type: str = "humanevalx",
     generation_mode: str = "completion",
     test_groundtruth: bool = False,
+    with_prompt: bool = True,
 ):
     if log_path is None:
         log_path = os.path.join(output_path, "evaluation.log")
@@ -127,7 +138,7 @@ def evaluate_functional_correctness(
 
     if output_path is not None:
         os.makedirs(output_path, exist_ok=True)
-    
+
     with ThreadPoolExecutor(max_workers=n_workers) as executor:
 
         futures = []
@@ -152,7 +163,7 @@ def evaluate_functional_correctness(
                     sample["prompt"] = problems[task_id]["prompt"]
             sample["prompt"] = problems[task_id]["prompt"]
             sample = postprocess_generation(sample, generation_mode)
-            sample["test_code"] = process_test(sample, problems, dataset_type, language_type, generation_mode)
+            sample["test_code"] = process_test(sample, problems, dataset_type, language_type, generation_mode, with_prompt)
             if sample["test_code"] is None:
                 continue
             if "completion_id" in sample:

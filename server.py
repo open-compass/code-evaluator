@@ -35,7 +35,7 @@ def check_datasets(dataset):
     else:
         raise NotImplementedError(f"{dataset} not implemented...")
 
-def make_cmd(eval_filepath, dataset, ip_address):
+def make_cmd(eval_filepath, dataset, ip_address, with_prompt):
     if 'humanevalx' in dataset:
         dataset, language = dataset.split("/")
         result_dir = f"outputs/{ip_address}-{dataset}-{language}"
@@ -45,6 +45,7 @@ def make_cmd(eval_filepath, dataset, ip_address):
             eval_filepath, 
             language, 
             "-n", '8', 
+            "-p", f"{with_prompt}", 
             "-o", result_dir,
             "-t", tmp_dir], result_dir
 
@@ -56,7 +57,10 @@ def _eval(single_request):
     
     dataset = single_request.form.get('dataset')
     ip_address = single_request.remote_addr
-
+    if 'With-Prompt' in single_request.headers:
+        with_prompt = single_request.headers['With-Prompt']
+    else:
+        with_prompt = True
     try:
         check_datasets(dataset) 
     except ValueError as e:
@@ -64,7 +68,7 @@ def _eval(single_request):
     except NotImplementedError as e:
         return {'message':f'Dataset({dataset}) not supported.', 'exception': e}, 400
 
-    cmd_items, result_dir = make_cmd(eval_filepath, dataset, ip_address)
+    cmd_items, result_dir = make_cmd(eval_filepath, dataset, ip_address, with_prompt)
     print("RUN CMD : " + " ".join(cmd_items))
 
     result = subprocess.run(cmd_items, capture_output=True, text=True)
