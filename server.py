@@ -1,4 +1,4 @@
-from flask import Flask, request, g
+from flask import Flask, request
 import os
 import subprocess
 import shutil
@@ -35,8 +35,21 @@ def check_datasets(dataset):
     else:
         raise NotImplementedError(f"{dataset} not implemented...")
 
-def make_cmd(eval_filepath, dataset, ip_address):
-    if 'humanevalx' in dataset:
+def make_cmd(request, eval_filepath):
+
+    dataset = request.form.get('dataset', None)
+    ip_address = request.remote_addr
+
+    if dataset and 'humanevalx' in dataset:
+        
+        # check dataset
+        try:
+            check_datasets(dataset) 
+        except ValueError as e:
+            return {'message':f'dataset name ({dataset}) is wrong.', 'exception': e}, 400
+        except NotImplementedError as e:
+            return {'message':f'Dataset({dataset}) not supported.', 'exception': e}, 400
+
         dataset, language = dataset.split("/")
         result_dir = f"outputs/{ip_address}-{dataset}-{language}"
         tmp_dir = f"outputs/{ip_address}-{dataset}-{language}-tmp"
@@ -47,45 +60,44 @@ def make_cmd(eval_filepath, dataset, ip_address):
             "-n", '8', 
             "-o", result_dir,
             "-t", tmp_dir], result_dir
+    elif 'ds1000' in eval_filepath:
+        result_dir = f"outputs/{ip_address}-{eval_filepath}"
+        return [
+            'python',
+            'evals/ds1000/evaluation.py',
+            '--pred_file', eval_filepath,
+            '--result_dir', result_dir,
+        ], result_dir
 
 def _eval(single_request):
     try:
         eval_filepath = upload_file(single_request)
     except Exception as e:
         return {'message': 'Error in upload_file', 'exception': e}, 400
-    
-    dataset = single_request.form.get('dataset')
-    ip_address = single_request.remote_addr
 
-    try:
-        check_datasets(dataset) 
-    except ValueError as e:
-        return {'message':f'dataset name ({dataset}) is wrong.', 'exception': e}, 400
-    except NotImplementedError as e:
-        return {'message':f'Dataset({dataset}) not supported.', 'exception': e}, 400
+    cmd_items, result_dir = make_cmd(single_request, eval_filepath)
+    cmd = ' '.join(cmd_items)
+    print("RUN CMD : " + cmd)
 
-    cmd_items, result_dir = make_cmd(eval_filepath, dataset, ip_address)
-    print("RUN CMD : " + " ".join(cmd_items))
-
-    result = subprocess.run(cmd_items, capture_output=True, text=True)
+    result = subprocess.run(cmd_items, text=True)
 
     if os.path.exists(os.path.dirname(eval_filepath)):
         shutil.rmtree(os.path.dirname(eval_filepath))
     
     if os.path.exists("tmp"):
         shutil.rmtree("tmp")
-    resilt_file = os.path.join(result_dir, "result.json")
-    if 'Evaluation finished.' in result.stdout and os.path.exists(resilt_file):
+    result_file = os.path.join(result_dir, "result.json")
+    if os.path.exists(result_file):
         result = dict()
-        with open(resilt_file, "r") as f:
+        with open(result_file, "r") as f:
             result = json.dumps(f.read())
-        if os.path.exists(os.path.dirname(resilt_file)):
-            shutil.rmtree(os.path.dirname(resilt_file))
+        if os.path.exists(os.path.dirname(result_file)):
+            shutil.rmtree(os.path.dirname(result_file))
         return result, 200
     else:
-        if os.path.exists(os.path.dirname(resilt_file)):
-            shutil.rmtree(os.path.dirname(resilt_file))
-        return {'message': "Eval Error with your result file.", 'stderr': result.stderr}, 400
+        if os.path.exists(os.path.dirname(result_file)):
+            shutil.rmtree(os.path.dirname(result_file))
+        return {'message': "Eval Error with your result file.", 'exception': 'Failed'}, 400
 
 
 @app.route('/evaluate', methods=['POST'])
