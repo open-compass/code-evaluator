@@ -6,6 +6,7 @@ import re
 import json
 import argparse
 from werkzeug.utils import secure_filename
+from inspect import signature
 
 app = Flask(__name__)
 
@@ -38,6 +39,7 @@ def check_datasets(dataset):
 def make_cmd(request, eval_filepath):
 
     dataset = request.form.get('dataset', None)
+    kwargs = request.form.to_dict()
     ip_address = request.remote_addr
 
     if dataset and 'humanevalx' in dataset:
@@ -62,11 +64,18 @@ def make_cmd(request, eval_filepath):
             "-t", tmp_dir], result_dir
     elif 'ds1000' in eval_filepath:
         result_dir = f"outputs/{ip_address}-{eval_filepath}"
+        from evals.ds1000.evaluation import evaluation
+        kwargs = [
+            [f'--{k}', f'{kwargs[k]}']
+            for k in signature(evaluation).parameters if k in kwargs
+        ]
+        kwargs = [item for pair in kwargs for item in pair]
         return [
             'python',
             'evals/ds1000/evaluation.py',
             '--pred_file', eval_filepath,
             '--result_dir', result_dir,
+            *kwargs,
         ], result_dir
 
 def _eval(single_request):

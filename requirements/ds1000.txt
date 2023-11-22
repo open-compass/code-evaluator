@@ -18,3 +18,5 @@ tqdm==4.64.1
 transformers==4.22.1
 xgboost==1.6.2
 Pillow==9.2.0
+fire
+flask
