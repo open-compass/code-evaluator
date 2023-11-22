@@ -38,7 +38,11 @@ RUN update-alternatives --install /usr/bin/java java $JAVA_HOME/bin/java 20000 \
     && rm -r /workspace/download \
     && env
 
-RUN git clone https://github.com/Ezra-Yu/code-evaluator.git 
-RUN cd code-evaluator && pip install -r requirements.txt
-
+RUN mkdir -p /workspace/code-evaluator
 WORKDIR /workspace/code-evaluator/
+
+COPY requirements requirements
+
+RUN pip install -r requirements/humanevalx.txt
+
+COPY . .
