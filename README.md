@@ -49,10 +49,11 @@ Make sure you have install docker, and then build a image and run a service of c
 
 build Docker Image:
 
+Choose your dataset: `humanevalx` or `ds1000`
+
 ```shell
-git clone https://github.com/Ezra-Yu/code-evaluator.git
-cd code-evaluator/docker 
-sudo docker build -t code-eval:latest . 
+git clone https://github.com/open-compass/code-evaluator.git
+sudo docker build -t code-eval-{your-dataset}:latest -f docker/{your-dataset}/Dockerfile .
 ```
 
 After getting the image, use the following command to create the container:
@@ -77,6 +78,8 @@ telnet your_service_ip_address your_service_port
 
 ### 2. Prepare submit result files
 
+
+### humanevalx
 We give sample formats for different datasets in the [examples](./examples/) folder.
 
 Let's take huamanevalx as an example，which submits results in the following format：
@@ -86,6 +89,10 @@ Let's take huamanevalx as an example，which submits results in the following fo
 {"task_id": "../..", "generation: "..."}
 ...
 ```
+
+### ds1000
+
+Skip this step, use prediction by opencompass directly.
 
 ### 3. Submit service request
 
@@ -105,6 +112,18 @@ You will get the fllowing result：
 
 ```text
 "{\"pass@1\": 37.19512195121951}"% 
+```
+
+such as evaluate 'ds1000_Numpy' in 'localhost:5000':
+
+```shell
+curl -X POST -F 'file=@./internlm-chat-7b-hf-v11/ds1000_Numpy.json' localhost:5000/evaluate
+```
+
+You will get the fllowing result：
+
+```text
+"{\"accuracy\": xx}"%
 ```
 
 ## 🤝 Acknowledgements

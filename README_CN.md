@@ -42,10 +42,11 @@ HumanEval-X 是用于评估代码生成模型的多语言能力的基准测试�
 
 构建 Docker 镜像：
 
+选择你的数据集: `humanevalx` or `ds1000`
+
 ```shell
-git clone https://github.com/Ezra-Yu/code-evaluator.git
-cd code-evaluator/docker 
-sudo docker build -t code-eval:latest . 
+git clone https://github.com/open-compass/code-evaluator.git
+sudo docker build -t code-eval-{your-dataset}:latest -f docker/{your-dataset}/Dockerfile .
 ```
 
 获取镜像后，使用以下命令创建容器：
@@ -70,6 +71,8 @@ telnet your_service_ip_address your_service_port
 
 ### 2. 准备提交结果文件
 
+### humanevalx
+
 我们在 [examples](./examples/) 文件夹中给出了不同数据集的样本格式。
 
 以 huamanevalx 为例，其提交结果的格式如下：
@@ -79,6 +82,10 @@ telnet your_service_ip_address your_service_port
 {"task_id": "../..", "generation: "..."}
 ...
 ```
+
+### ds1000
+
+Skip this step, use prediction by opencompass directly.
 
 ### 3. 提交服务请求
 
@@ -99,6 +106,19 @@ curl -X POST -F 'file=@./examples/humanevalx/python.json' -F 'dataset=humanevalx
 ```text
 "{\"pass@1\": 37.19512195121951}"% 
 ```
+
+比如在 'localhost:5000' 上评估 ds1000_Numpy :
+
+```shell
+curl -X POST -F 'file=@./internlm-chat-7b-hf-v11/ds1000_Numpy.json' localhost:5000/evaluate
+```
+
+你将得到以下结果：
+
+```text
+"{\"accuracy\": xx}"%
+```
+
 
 ## 🤝 致谢
 
