@@ -137,9 +137,6 @@ def evaluation(pred_file, dataset_path='./ds1000_data/', result_dir= None, debug
     with open(pred_file, 'r') as f:
         file_content = json.load(f)
         raw_preds = [value['prediction'] for value in file_content.values()]
-        # refers = [value['gold'] for value in file_content.values()]
-    with open(os.path.join('20231102_133713/predictions/internlm-chat-7b-hf-v11', pred_file.split('/')[-1]), 'r') as f:
-        file_content = json.load(f)
         refers = [value['gold'] for value in file_content.values()]
 
     # post proprocessing
@@ -156,6 +153,7 @@ def evaluation(pred_file, dataset_path='./ds1000_data/', result_dir= None, debug
 
     total = len(preds)
 
+    # create dir if not exists
     if result_dir is not None:
         os.makedirs(result_dir, exist_ok=True)
     out_result_file = os.path.join(result_dir, "result.json")
