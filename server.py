@@ -90,8 +90,8 @@ def _eval(single_request):
 
     result = subprocess.run(cmd_items, text=True)
 
-    if os.path.exists(os.path.dirname(eval_filepath)):
-        shutil.rmtree(os.path.dirname(eval_filepath))
+    if os.path.exists(eval_filepath):
+        os.remove(eval_filepath)
     
     if os.path.exists("tmp"):
         shutil.rmtree("tmp")
