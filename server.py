@@ -7,6 +7,7 @@ import json
 import argparse
 from werkzeug.utils import secure_filename
 from inspect import signature
+import zipfile
 
 app = Flask(__name__)
 
@@ -22,11 +23,18 @@ def upload_file(request):
     
     # 保存文件到本地
     ip_address = request.remote_addr
-    filepath = os.path.join('uploads', ip_address, secure_filename(file.filename))
-    if not os.path.exists(os.path.join('uploads', ip_address)):
-        os.makedirs(os.path.join('uploads', ip_address))
-    file.save(filepath)
-    return filepath
+    filename = secure_filename(file.filename)
+    filedir = os.path.join('uploads', ip_address)
+    if not os.path.exists(filedir):
+        os.makedirs(filedir)
+    if filename.endswith('.zip'):
+        with zipfile.ZipFile(file, 'r') as zip_ref:
+            zip_ref.extractall(filedir)
+        return filedir
+    else:
+        filepath = os.path.join('uploads', ip_address, filename)
+        file.save(filepath)
+        return filepath
 
 
 def check_datasets(dataset):
@@ -77,6 +85,16 @@ def make_cmd(request, eval_filepath):
             '--result_dir', result_dir,
             *kwargs,
         ], result_dir
+    elif dataset and 'multipl-e' in dataset:
+        dataset, language = dataset.split("/")
+        result_dir = f"outputs/{ip_address}-{dataset}-{language}"
+        return [
+            'python3',
+            'evals/multipl-e/main.py',
+            '--dir', eval_filepath,
+            '--output-dir', result_dir,
+            '--recursive',
+        ], result_dir
 
 def _eval(single_request):
     try:
@@ -88,10 +106,16 @@ def _eval(single_request):
     cmd = ' '.join(cmd_items)
     print("RUN CMD : " + cmd)
 
-    result = subprocess.run(cmd_items, text=True)
+    result = subprocess.run(cmd_items, text=True, stdout=subprocess.PIPE)
+    print("Output:", result.stdout)
 
     if os.path.exists(eval_filepath):
-        os.remove(eval_filepath)
+        if os.path.isdir(eval_filepath):
+            # If eval_filepath is a directory, remove the entire directory
+            shutil.rmtree(eval_filepath)
+        else:
+            # If eval_filepath is a file, remove the file
+            os.remove(eval_filepath)
     
     if os.path.exists("tmp"):
         shutil.rmtree("tmp")
